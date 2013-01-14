@@ -377,13 +377,28 @@ libc_common_src_files += \
 	arch-arm/bionic/tgkill.S \
 	arch-arm/bionic/memcmp.S \
 	arch-arm/bionic/memcmp16.S \
-	arch-arm/bionic/memcpy.S \
 	arch-arm/bionic/setjmp.S \
 	arch-arm/bionic/sigsetjmp.S \
 	arch-arm/bionic/strcmp.S \
 	arch-arm/bionic/syscall.S \
 	string/strncmp.c \
 	unistd/socketcalls.c
+
+# Use newer method by default for ARM devices unless older method of memcpy is opt-in
+ifeq ($(TARGET_ARCH),arm)
+  ifneq ($(USE_OLD_MEMCPY),true)
+  libc_common_src_files += \
+	  arch-arm/bionic/memcpy.S
+  endif
+
+  # If older method of memcpy is opt-in but no ARMV7A, use the newer method of memcpy either way
+  ifeq ($(USE_OLD_MEMCPY),true)
+    ifneq ($(ARCH_ARM_HAVE_ARMV7A),true)
+    libc_common_src_files += \
+	    arch-arm/bionic/memcpy.S
+    endif
+  endif
+endif
 
 # Check if we want a neonized version of memmove instead of the
 # current ARM version
@@ -451,6 +466,15 @@ libc_common_src_files += \
 	arch-arm/bionic/strlen.c.arm
 endif
 
+# Only use bzero.S on ARMV7A/NON_NEON_MEMCPY devices
+ifeq ($(ARCH_ARM_HAVE_ARMV7A)-$(ARCH_ARM_USE_NON_NEON_MEMCPY),true-true)
+libc_common_src_files += \
+	arch-arm/bionic/armv7/bzero.S
+endif
+ifeq ($(ARCH_ARM_HAVE_ARMV7A)-$(USE_OLD_MEMCPY),true-true)
+libc_common_src_files += \
+	arch-arm/bionic/armv7/memcpy.S
+endif
 else # arm
 
 libc_common_src_files += \
