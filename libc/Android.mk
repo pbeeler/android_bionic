@@ -452,11 +452,13 @@ libc_arch_dynamic_src_files := \
 	arch-arm/bionic/exidx_dynamic.c
 
 ifeq ($(ARCH_ARM_HAVE_ARMV7A),true)
-libc_common_src_files += \
-	arch-arm/bionic/armv7/memchr.S \
-	arch-arm/bionic/armv7/strchr.S \
-	arch-arm/bionic/armv7/strcpy.c \
-	arch-arm/bionic/armv7/strlen.S
+  ifneq ($(IS_ARMV7A_QCOM),true)
+  libc_common_src_files += \
+	  arch-arm/bionic/armv7/memchr.S \
+	  arch-arm/bionic/armv7/strchr.S \
+	  arch-arm/bionic/armv7/strcpy.c \
+	  arch-arm/bionic/armv7/strlen.S
+  endif
 else
 libc_common_src_files += \
 	string/memchr.c \
@@ -464,6 +466,14 @@ libc_common_src_files += \
 	arch-arm/bionic/strcpy.S \
 	arch-arm/bionic/strlen.c.arm
 endif
+
+# Don't use linaro string routines on QCOM chipsets
+ifeq ($(ARCH_ARM_HAVE_ARMV7A)-$(IS_ARMV7A_QCOM),true-true)
+libc_common_src_files += \
+	string/memchr.c \
+	string/strchr.c \
+	arch-arm/bionic/strcpy.S \
+	arch-arm/bionic/strlen.c.arm
 endif
 ifeq ($(ARCH_ARM_HAVE_ARMV7A)-$(USE_OLD_MEMCPY),true-true)
 libc_common_src_files += \
